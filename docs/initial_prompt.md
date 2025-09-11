@@ -11,6 +11,7 @@ A minimal but professional system that can:
 ## Technical Requirements
 
 ### Language and frameworks
+- venv (every library must be intalled inside an environment)
 - Python 3.11  
 - FastAPI for the REST API  
 - SQLAlchemy + Alembic for the database  
@@ -49,7 +50,7 @@ Tables:
 - facts  
 - messages (optional)  
 
-Include either a `schema.sql` file or Alembic migrations.
+Include and make use of Alembic migrations.
 
 ### CLI Scripts
 Generate inside `scripts/`:
