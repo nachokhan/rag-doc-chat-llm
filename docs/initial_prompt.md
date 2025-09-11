@@ -20,6 +20,9 @@ A minimal but professional system that can:
 - pytest for testing  
 
 ### Endpoints
+
+Endpoints must return proper HTTP status (400 bad input, 404 unknown docId, 5xx errors)
+
 1. **POST /upload**  
    - Payload: `multipart/form-data (file)`  
    - Stores the document, parses it into pages, extracts facts with an LLM, generates embeddings, and saves everything in Postgres.  
