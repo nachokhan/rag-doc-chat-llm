@@ -18,4 +18,5 @@ def conversation(request: ConversationRequest, db: Session = Depends(get_db)):
         response = chat.get_chat_response(db, request.docId, request.message)
         return response
     except Exception as e:
+        logging.error(f"Error in conversation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
