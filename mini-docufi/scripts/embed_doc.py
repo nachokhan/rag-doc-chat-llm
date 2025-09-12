@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import tempfile
@@ -22,7 +23,7 @@ def embed_document(file_path: str, db: Session):
         elif filename.endswith(".docx"):
             pages_content = parser_docx.parse_docx(file_path)
         else:
-            print("Unsupported file type")
+            logging.warning("Unsupported file type")
             return
 
         # Create a new document record
@@ -61,20 +62,21 @@ def embed_document(file_path: str, db: Session):
                     db.add(fact)
 
         db.commit()
-        print(f"Successfully embedded document: {filename} (docId: {doc.id})")
+        logging.info("Successfully embedded document: %s (docId: %s)", filename, doc.id)
 
     except Exception as e:
         db.rollback()
-        print(f"Error embedding document: {e}")
+        logging.error("Error embedding document: %s", e)
 
 def main():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     if len(sys.argv) < 2:
-        print("Usage: python scripts/embed_doc.py <path_to_document>")
+        logging.info("Usage: python scripts/embed_doc.py <path_to_document>")
         sys.exit(1)
 
     file_path = sys.argv[1]
     if not os.path.exists(file_path):
-        print(f"File not found: {file_path}")
+        logging.error("File not found: %s", file_path)
         sys.exit(1)
 
     db = SessionLocal()

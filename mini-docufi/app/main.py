@@ -1,6 +1,9 @@
+import logging
 from fastapi import FastAPI
 
 from app.routes import conversation, upload
+
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="mini-docufi",

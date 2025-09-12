@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from openai import OpenAI
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
@@ -43,8 +44,8 @@ def get_facts_from_text(text: str) -> list[dict]:
 
     try:
         facts = json.loads(response.choices[0].message.content)
-        print("Parsed successfully:", facts)
+        logging.info("Parsed successfully")
         return facts
     except (json.JSONDecodeError, IndexError):
-        print("Error parsing JSON response:", response.choices[0].message.content)
+        logging.error("Error parsing JSON response: %s", response.choices[0].message.content)
         return []

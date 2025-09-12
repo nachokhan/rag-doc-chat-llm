@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -12,8 +13,9 @@ from app.services import chat
 
 def main():
     """Runs a simple evaluation of the chat service."""
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     if len(sys.argv) < 2:
-        print("Usage: python scripts/evals.py <docId>")
+        logging.info("Usage: python scripts/evals.py <docId>")
         sys.exit(1)
 
     doc_id = sys.argv[1]
@@ -27,10 +29,10 @@ def main():
     db = SessionLocal()
     try:
         for question in questions:
-            print(f"\nQuestion: {question}")
+            logging.info("Question: %s", question)
             response = chat.get_chat_response(db, doc_id, question)
-            print(f"Answer: {response['reply']}")
-            print(f"Sources: {response['Sources']}")
+            logging.info("Answer: %s", response['reply'])
+            logging.info("Sources: %s", response['Sources'])
     finally:
         db.close()
 
