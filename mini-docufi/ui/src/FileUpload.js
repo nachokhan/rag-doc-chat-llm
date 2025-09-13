@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function FileUpload({ setDocId }) {
+function FileUpload({ setDocId, onUploadSuccess }) {
   const [file, setFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -23,7 +23,7 @@ function FileUpload({ setDocId }) {
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/upload', {
+      const response = await fetch('/api/documents/', {
         method: 'POST',
         body: formData,
       });
@@ -34,6 +34,7 @@ function FileUpload({ setDocId }) {
 
       const data = await response.json();
       setDocId(data.docId);
+      onUploadSuccess();
     } catch (error) {
       setError(error.message);
     } finally {

@@ -2,7 +2,10 @@ import logging
 import os
 import tempfile
 import uuid
+from datetime import datetime
+from typing import List
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app import models
@@ -12,8 +15,16 @@ from app.utils import parser_docx, parser_pdf
 
 router = APIRouter()
 
-@router.post("/upload")
-def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+class DocumentSchema(BaseModel):
+    id: uuid.UUID
+    filename: str
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+@router.post("/")
+def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """Uploads a document, parses it, extracts facts, generates embeddings, and saves everything to the database."""
     try:
         logging.info("Received file: %s", file.filename)
@@ -86,3 +97,8 @@ def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
         if 'tmp_path' in locals() and os.path.exists(tmp_path):
             logging.debug("Removing temporary file: %s", tmp_path)
             os.remove(tmp_path)
+
+@router.get("/", response_model=List[DocumentSchema])
+def get_documents(db: Session = Depends(get_db)):
+    """Returns a list of all documents."""
+    return db.query(models.Document).all()
