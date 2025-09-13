@@ -26,11 +26,12 @@ def get_chat_response(db: Session, doc_id: str, message: str) -> dict:
         .limit(3)
         .all()
     )
+    logging.debug("Found %d relevant pages", len(pages_with_distance))
     relevant_pages = [page for page, distance in pages_with_distance]
 
 
     # Find relevant facts
-    logging
+    logging.info("Finding relevant facts for document ID: %s", doc_id)
     facts_with_distance = (
         db.query(
             models.Fact,
@@ -41,6 +42,7 @@ def get_chat_response(db: Session, doc_id: str, message: str) -> dict:
         .limit(5)
         .all()
     )
+    logging.debug("Found %d relevant facts", len(facts_with_distance))
     relevant_facts = [fact for fact, distance in facts_with_distance]
 
     # Construct the prompt
