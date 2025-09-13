@@ -1,6 +1,6 @@
 # mini-docufi
 
-A minimal but professional system that can:
+A minimal system that can:
 1. Upload PDF/DOCX documents.
 2. Parse them, store them, and generate embeddings per page and key “facts”.
 3. Expose a conversation endpoint that can answer questions about the document, referencing pages and/or extracted facts.
