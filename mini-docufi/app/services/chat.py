@@ -1,4 +1,5 @@
 import os
+import logging
 from openai import OpenAI
 from sqlalchemy.orm import Session
 
@@ -9,9 +10,12 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def get_chat_response(db: Session, doc_id: str, message: str) -> dict:
     """Generates a chat response based on a user's message and a document."""
+
+    logging.info("Generating chat response for message: %s", message)
     message_embedding = embeddings.generate_embeddings([message])[0]
 
     # Find relevant pages
+    logging.info("Finding relevant pages for document ID: %s", doc_id)
     pages_with_distance = (
         db.query(
             models.Page,
@@ -26,6 +30,7 @@ def get_chat_response(db: Session, doc_id: str, message: str) -> dict:
 
 
     # Find relevant facts
+    logging
     facts_with_distance = (
         db.query(
             models.Fact,
@@ -39,6 +44,7 @@ def get_chat_response(db: Session, doc_id: str, message: str) -> dict:
     relevant_facts = [fact for fact, distance in facts_with_distance]
 
     # Construct the prompt
+    logging.info("Constructing prompt for the LLM...")
     context = "\n".join([p.content for p in relevant_pages])
     facts = "\n".join([f'{f.label}: {f.value_text}' for f in relevant_facts])
     prompt = f"""Answer the following question based on the provided context and facts.
@@ -53,6 +59,7 @@ Question: {message}
 
 Answer:"""
 
+    logging.debug("Sending prompt to LLM...")
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -68,6 +75,7 @@ Answer:"""
 
     reply = response.choices[0].message.content
 
+    logging.info("Collecting sources...")
     sources = {
         "facts": [
             {"id": str(f.id), "label": f.label, "value_text": f.value_text, "page": f.page, "score": d}
@@ -77,5 +85,7 @@ Answer:"""
             {"page": p.page_number, "score": d} for p, d in pages_with_distance
         ]
     }
+
+    logging.info("Chat response generated successfully.")
 
     return {"reply": reply, "Sources": sources}
