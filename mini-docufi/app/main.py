@@ -1,7 +1,7 @@
 import logging
 from fastapi import FastAPI
 
-from app.routes import conversation, documents
+from app.routes import conversation, documents, analysis
 
 logging.basicConfig(level=logging.INFO)
 
@@ -13,6 +13,7 @@ app = FastAPI(
 
 app.include_router(documents.router, prefix="/api/documents")
 app.include_router(conversation.router, prefix="/api")
+app.include_router(analysis.router, prefix="/api")
 
 @app.get("/health")
 def health_check():

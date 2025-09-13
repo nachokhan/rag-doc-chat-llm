@@ -13,3 +13,4 @@ requests
 python-dotenv
 tenacity
 python-multipart
+sse-starlette
