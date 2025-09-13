@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import FileUpload from './FileUpload';
 import Chat from './Chat';
 import DocumentList from './DocumentList';
+import MarketAnalysis from './MarketAnalysis';
 import './App.css';
 
 function App() {
@@ -27,9 +28,14 @@ function App() {
         <h1>mini-docufi</h1>
       </header>
       <div className="container">
-        <FileUpload setDocId={setDocId} onUploadSuccess={fetchDocuments} />
-        <DocumentList setDocId={setDocId} documents={documents} fetchDocuments={fetchDocuments} />
-        {docId && <Chat docId={docId} />}
+        <div className="document-section">
+          <FileUpload setDocId={setDocId} onUploadSuccess={fetchDocuments} />
+          <DocumentList setDocId={setDocId} documents={documents} fetchDocuments={fetchDocuments} />
+          {docId && <Chat docId={docId} />}
+        </div>
+        <div className="analysis-section">
+          <MarketAnalysis />
+        </div>
       </div>
     </div>
   );

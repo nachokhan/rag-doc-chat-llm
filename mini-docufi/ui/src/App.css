@@ -10,9 +10,17 @@
 
 .container {
   display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: flex-start;
+  padding: 20px;
+}
+
+.document-section, .analysis-section {
+  width: 48%;
+  display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
 }
 
 .chat-window {
@@ -41,4 +49,41 @@
 .sources {
   font-size: 0.8em;
   color: #666;
+}
+
+.market-analysis {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 5px;
+}
+
+.analysis-controls input {
+  width: 70%;
+  padding: 8px;
+  margin-right: 10px;
+}
+
+.analysis-controls button {
+  padding: 8px 12px;
+}
+
+.progress-log {
+  margin-top: 10px;
+  font-style: italic;
+  color: #888;
+}
+
+.report-display {
+  margin-top: 15px;
+  text-align: left;
+  white-space: pre-wrap;
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.report-display pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
