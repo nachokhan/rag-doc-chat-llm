@@ -12,22 +12,31 @@ def get_chat_response(db: Session, doc_id: str, message: str) -> dict:
     message_embedding = embeddings.generate_embeddings([message])[0]
 
     # Find relevant pages
-    relevant_pages = (
-        db.query(models.Page)
+    pages_with_distance = (
+        db.query(
+            models.Page,
+            models.Page.embedding.l2_distance(message_embedding).label("distance")
+        )
         .filter(models.Page.document_id == doc_id)
-        .order_by(models.Page.embedding.l2_distance(message_embedding))
+        .order_by("distance")
         .limit(3)
         .all()
     )
+    relevant_pages = [page for page, distance in pages_with_distance]
+
 
     # Find relevant facts
-    relevant_facts = (
-        db.query(models.Fact)
+    facts_with_distance = (
+        db.query(
+            models.Fact,
+            models.Fact.embedding.l2_distance(message_embedding).label("distance")
+        )
         .filter(models.Fact.document_id == doc_id)
-        .order_by(models.Fact.embedding.l2_distance(message_embedding))
+        .order_by("distance")
         .limit(5)
         .all()
     )
+    relevant_facts = [fact for fact, distance in facts_with_distance]
 
     # Construct the prompt
     context = "\n".join([p.content for p in relevant_pages])
@@ -61,11 +70,11 @@ Answer:"""
 
     sources = {
         "facts": [
-            {"id": str(f.id), "label": f.label, "value_text": f.value_text, "page": f.page}
-            for f in relevant_facts
+            {"id": str(f.id), "label": f.label, "value_text": f.value_text, "page": f.page, "score": d}
+            for f, d in facts_with_distance
         ],
         "pages": [
-            {"page": p.page_number, "score": p.embedding.l2_distance(message_embedding)} for p in relevant_pages
+            {"page": p.page_number, "score": d} for p, d in pages_with_distance
         ]
     }
 
