@@ -1,5 +1,5 @@
 
-.PHONY: build run stop logs format test init_db migrate debug
+.PHONY: build run stop logs format test init_db migrate debug db-clean-data
 
 debug:
 	docker-compose -f docker-compose.yml -f docker-compose.debug.yml up --build
@@ -28,4 +28,7 @@ test:
 
 init_db:
 	docker-compose run --rm api python scripts/init_db.py
+
+db-clean-data:
+	docker-compose run --rm api python scripts/clean_db_data.py
 
