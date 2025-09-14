@@ -25,11 +25,11 @@ async def start_market_analysis(request: AnalysisRequest, background_tasks: Back
     db.add(new_analysis)
     db.commit()
     db.refresh(new_analysis)
-    
+
     task_id = new_analysis.id
-    
+
     background_tasks.add_task(run_analysis, task_id, request.query)
-    
+
     return {"message": "Analysis started", "task_id": task_id}
 
 @router.get("/analysis/stream/{task_id}")
@@ -45,15 +45,15 @@ async def stream_market_analysis(task_id: int, db: Session = Depends(get_db)):
                 if task.progress_updates and task.progress_updates != last_update:
                     yield {"event": "progress", "data": task.progress_updates}
                     last_update = task.progress_updates
-                
+
                 if task.status == TaskStatus.COMPLETED:
                     yield {"event": "complete", "data": task.report}
                     break
-                
+
                 if task.status == TaskStatus.FAILED:
                     yield {"event": "error", "data": "Analysis failed."}
                     break
-            
+
             await asyncio.sleep(2) # Poll the DB every 2 seconds
 
     return EventSourceResponse(event_generator())

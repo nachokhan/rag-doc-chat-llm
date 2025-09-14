@@ -11,7 +11,7 @@ def run_analysis(task_id: int, query: str):
     """
     print(f"Starting analysis for task {task_id} with query: {query}")
     db = next(get_db())
-    
+
     try:
         # 1. Update status to IN_PROGRESS
         db.query(MarketAnalysis).filter(MarketAnalysis.id == task_id).update({
@@ -25,7 +25,7 @@ def run_analysis(task_id: int, query: str):
         db.commit()
         external_data = researchers.research_external_data(query)
         internal_data = researchers.research_internal_data(query)
-        
+
         # 3. Synthesize
         db.query(MarketAnalysis).filter(MarketAnalysis.id == task_id).update({"progress_updates": "Synthesizing market size and top players..."})
         db.commit()
