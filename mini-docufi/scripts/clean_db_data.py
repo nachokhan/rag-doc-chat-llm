@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -20,10 +21,10 @@ def clean_db_data():
         db.query(Page).delete()
         db.query(Document).delete()
         db.commit()
-        print("Database data cleaned successfully.")
+        logging.info("Database data cleaned successfully.")
     except Exception as e:
         db.rollback()
-        print(f"Error cleaning database data: {e}")
+        logging.error(f"Error cleaning database data: {e}")
     finally:
         db.close()
 
