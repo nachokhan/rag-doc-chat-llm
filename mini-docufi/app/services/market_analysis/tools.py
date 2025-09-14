@@ -2,90 +2,106 @@
 Tools for the market analysis agents.
 """
 import os
-import logging
 from langchain.tools import tool
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
 from app.services import embeddings
 from app import models
 from app.db import get_db
 
-# This is a placeholder for the actual google_web_search tool.
-# In a real scenario, this would be the tool provided by the environment.
+# In a real scenario, the google_web_search and web_fetch tools would be provided by the environment.
+# For this implementation, we will use mock versions.
 class MockGoogleWebSearch:
-    def search(self, query: str):
-        return f"Mock search results for: {query}"
+    def search(self, query: str, num_results: int = 5):
+        print(f"Mock Google Search for: {query}")
+        return {"results": [
+            {"url": "https://www.mocksite.com/report1", "title": "Market Report 1"},
+            {"url": "https://www.mocksite.com/report2", "title": "Market Report 2"},
+        ]}
+
+class MockWebFetch:
+    def fetch(self, url: str):
+        print(f"Mock Web Fetch for: {url}")
+        return {"content": f"This is the mock content for {url}. It contains data about market size and top players."}
 
 google_web_search = MockGoogleWebSearch()
+web_fetch = MockWebFetch()
 
+# --- Summarization Chain --- #
+SUMMARIZER_PROMPT = ChatPromptTemplate.from_messages([
+    ("system", "You are an expert at summarizing web content. Extract the key information relevant to the user's original query."),
+    ("user", "Original Query: {query}\n\nContent:\n{content}"),
+])
+llm = ChatOpenAI(temperature=0, model="gpt-4-turbo-preview", api_key=os.getenv("OPENAI_API_KEY"))
+summarizer_chain = SUMMARIZER_PROMPT | llm | StrOutputParser()
+
+# --- Credible Sources --- #
 CREDIBLE_SOURCES = [
-    "gartner.com",
-    "idc.com",
-    "forrester.com",
-    "bloomberg.com",
-    "reuters.com",
-    "worldbank.org",
-    "statista.com",
-    "forbes.com",
+    "gartner.com", "idc.com", "forrester.com", "bloomberg.com", "reuters.com",
+    "worldbank.org", "statista.com", "forbes.com", "mckinsey.com",
 ]
 
 @tool
 def external_search(query: str) -> str:
-    """Searches credible external sources for information on a given topic."""
-    logging.info(f"Executing external search for: {query}")
+    """Performs a web search on credible sources, fetches the content of the top results, 
+    and returns a summarized version of their content."""
+    print(f"Executing AI-powered external search for: {query}")
+
+    # 1. Perform Web Search
     site_queries = " OR ".join([f"site:{source}" for source in CREDIBLE_SOURCES])
     full_query = f'"{query}" ({site_queries})'
+    search_results = google_web_search.search(query=full_query, num_results=5)
 
-    # In a real scenario, this would call the actual google_web_search tool.
-    # For this implementation, we call the mock version.
-    search_results = google_web_search.search(query=full_query)
+    if not search_results or not search_results.get("results"):
+        return "No relevant external sources found."
 
-    # Here you could also process the results, e.g., by fetching and summarizing the content of the top URLs.
-    # For now, we'll just return the raw search results.
-    return search_results
+    summaries = []
+    for result in search_results["results"]:
+        url = result["url"]
+        try:
+            # 2. Fetch Content
+            fetched_content = web_fetch.fetch(url=url)
+            if not fetched_content or not fetched_content.get("content"):
+                continue
+
+            # 3. Summarize Content
+            summary = summarizer_chain.invoke({
+                "query": query,
+                "content": fetched_content["content"]
+            })
+            summaries.append(f"Source: {url}\nSummary: {summary}")
+        except Exception as e:
+            print(f"Error processing URL {url}: {e}")
+            continue
+
+    # 4. Compile Final Result
+    if not summaries:
+        return "Could not process any of the found external sources."
+
+    return "\n\n---\n\n".join(summaries)
 
 @tool
 def internal_search(query: str) -> str:
     """Searches internal documents (pages and facts) for information on a given topic."""
-    logging.info(f"Executing internal search for: {query}")
+    # ... (internal_search implementation remains the same)
+    print(f"Executing internal search for: {query}")
     db = next(get_db())
     try:
         query_embedding = embeddings.generate_embeddings([query])[0]
-
-        # Search across all pages in the database
-        pages_with_distance = (
-            db.query(
-                models.Page,
-                models.Page.embedding.l2_distance(query_embedding).label("distance")
-            )
-            .order_by("distance")
-            .limit(5)
-            .all()
-        )
-
-        # Search across all facts in the database
-        facts_with_distance = (
-            db.query(
-                models.Fact,
-                models.Fact.embedding.l2_distance(query_embedding).label("distance")
-            )
-            .order_by("distance")
-            .limit(10)
-            .all()
-        )
-
+        pages_with_distance = db.query(models.Page, models.Page.embedding.l2_distance(query_embedding).label("distance")).order_by("distance").limit(5).all()
+        facts_with_distance = db.query(models.Fact, models.Fact.embedding.l2_distance(query_embedding).label("distance")).order_by("distance").limit(10).all()
         page_context = "\n".join([f"[Page {p.page_number} from doc {p.document_id}]: {p.content}" for p, dist in pages_with_distance])
         fact_context = "\n".join([f"[Fact from doc {f.document_id}]: {f.label}: {f.value_text}" for f, dist in facts_with_distance])
-
         if not page_context and not fact_context:
             return "No relevant information found in internal documents."
-
         return f"""Relevant Information from Internal Documents:
 
----
-From Document Pages ---
+--- From Document Pages ---
 {page_context}
 
----
-From Extracted Facts ---
+--- From Extracted Facts ---
 {fact_context}
 """
     finally:
