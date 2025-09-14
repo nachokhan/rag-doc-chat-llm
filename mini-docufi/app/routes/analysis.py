@@ -42,6 +42,7 @@ async def stream_market_analysis(task_id: int, db: Session = Depends(get_db)):
         while True:
             task = db.query(MarketAnalysis).filter(MarketAnalysis.id == task_id).first()
             if task:
+                db.refresh(task)  # Force a refresh to see committed changes
                 if task.progress_updates and task.progress_updates != last_update:
                     yield {"event": "progress", "data": task.progress_updates}
                     last_update = task.progress_updates
@@ -54,6 +55,6 @@ async def stream_market_analysis(task_id: int, db: Session = Depends(get_db)):
                     yield {"event": "error", "data": "Analysis failed."}
                     break
 
-            await asyncio.sleep(2) # Poll the DB every 2 seconds
+            await asyncio.sleep(2)  # Poll the DB every 2 seconds
 
     return EventSourceResponse(event_generator())
