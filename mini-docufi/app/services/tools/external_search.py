@@ -1,15 +1,11 @@
 """
-Tools for the market analysis agents.
+External search tool with AI-powered summarization.
 """
 import os
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-
-from app.services import embeddings
-from app import models
-from app.db import get_db
 
 # In a real scenario, the google_web_search and web_fetch tools would be provided by the environment.
 # For this implementation, we will use mock versions.
@@ -48,7 +44,7 @@ def external_search(query: str) -> str:
     """Performs a web search on credible sources, fetches the content of the top results, 
     and returns a summarized version of their content."""
     print(f"Executing AI-powered external search for: {query}")
-
+    
     # 1. Perform Web Search
     site_queries = " OR ".join([f"site:{source}" for source in CREDIBLE_SOURCES])
     full_query = f'"{query}" ({site_queries})'
@@ -79,30 +75,5 @@ def external_search(query: str) -> str:
     # 4. Compile Final Result
     if not summaries:
         return "Could not process any of the found external sources."
-
+    
     return "\n\n---\n\n".join(summaries)
-
-@tool
-def internal_search(query: str) -> str:
-    """Searches internal documents (pages and facts) for information on a given topic."""
-    # ... (internal_search implementation remains the same)
-    print(f"Executing internal search for: {query}")
-    db = next(get_db())
-    try:
-        query_embedding = embeddings.generate_embeddings([query])[0]
-        pages_with_distance = db.query(models.Page, models.Page.embedding.l2_distance(query_embedding).label("distance")).order_by("distance").limit(5).all()
-        facts_with_distance = db.query(models.Fact, models.Fact.embedding.l2_distance(query_embedding).label("distance")).order_by("distance").limit(10).all()
-        page_context = "\n".join([f"[Page {p.page_number} from doc {p.document_id}]: {p.content}" for p, dist in pages_with_distance])
-        fact_context = "\n".join([f"[Fact from doc {f.document_id}]: {f.label}: {f.value_text}" for f, dist in facts_with_distance])
-        if not page_context and not fact_context:
-            return "No relevant information found in internal documents."
-        return f"""Relevant Information from Internal Documents:
-
---- From Document Pages ---
-{page_context}
-
---- From Extracted Facts ---
-{fact_context}
-"""
-    finally:
-        db.close()
