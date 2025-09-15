@@ -1,5 +1,9 @@
 """
 External search tool with AI-powered summarization.
+
+
+NOTE: This implementation uses mock versions of google_web_search and web_fetch tools.
+
 """
 import os
 from langchain.tools import tool
@@ -7,8 +11,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-# In a real scenario, the google_web_search and web_fetch tools would be provided by the environment.
-# For this implementation, we will use mock versions.
+
 class MockGoogleWebSearch:
     def search(self, query: str, num_results: int = 5):
         print(f"Mock Google Search for: {query}")
@@ -44,7 +47,7 @@ def external_search(query: str) -> str:
     """Performs a web search on credible sources, fetches the content of the top results, 
     and returns a summarized version of their content."""
     print(f"Executing AI-powered external search for: {query}")
-    
+
     # 1. Perform Web Search
     site_queries = " OR ".join([f"site:{source}" for source in CREDIBLE_SOURCES])
     full_query = f'"{query}" ({site_queries})'
@@ -75,5 +78,5 @@ def external_search(query: str) -> str:
     # 4. Compile Final Result
     if not summaries:
         return "Could not process any of the found external sources."
-    
+
     return "\n\n---\n\n".join(summaries)
