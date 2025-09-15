@@ -1,6 +1,24 @@
 # mini-docufi
 
-## Setup
+## Setup Frontend
+
+- **Navigate to the UI directory:**
+  ```bash
+  cd ui
+  ```
+
+- **Install dependencies:**
+  ```bash
+  npm install
+  ```
+
+- **Run the development server:**
+  ```bash
+  npm start
+  ```
+  The application will be available at `http://localhost:3000`.
+
+## Setup Backend
 
 - **Set up environment variables:**
    Create a `.env` file:
@@ -38,8 +56,6 @@
      ```bash
      make test
      ```
-
-## API Usage
 
 The API will be available at `http://localhost:8000`.
 
